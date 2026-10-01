@@ -9,22 +9,31 @@
     MD5 digest (not plaintext), and the client supplies its own sessionId which the device
     rewrites by appending a server timestamp.
 
-    Factory credentials on this device were admin / admin. That is the vendor's default,
-    not something discovered — but it is worth stating plainly because it is what makes
-    the injection in docs/04 practically reachable.
+    The account is the stock 'admin' user. The PASSWORD IS NOT the factory default and is
+    never stored here — pass it in, or set $env:P11_WEB_PASS. Note that the "MD5 digest"
+    travels over plain HTTP, so it protects nothing against anyone capturing LAN traffic.
 
     Usage:
-        & web-login.ps1 -Password 'admin' -OutFile .\sid.txt
+        $env:P11_WEB_PASS = 'your-web-admin-password'
+        & web-login.ps1 -Password $env:P11_WEB_PASS -OutFile .\sid.txt
 
     Authorised testing on equipment you own only.
 #>
 param(
-    [Parameter(Mandatory = $true)][string]$Password,
+    [Parameter(Mandatory = $false)][string]$Password = '',
     [string]$Username = 'admin',
     [string]$HostAddr = '192.168.8.1',
     [string]$OutFile  = ''
 )
 $ErrorActionPreference = 'Stop'
+
+# Never stored in a file: parameter > $env:P11_WEB_PASS > interactive prompt
+if (-not $Password) { $Password = $env:P11_WEB_PASS }
+if (-not $Password) {
+    $sec = Read-Host -AsSecureString "Password for ${Username}@$HostAddr"
+    $Password = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
+}
 
 function Get-Md5([string]$s) {
     $md5  = [Security.Cryptography.MD5]::Create()

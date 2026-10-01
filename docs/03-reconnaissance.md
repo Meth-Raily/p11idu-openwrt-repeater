@@ -29,7 +29,7 @@ Login is `cmd=100`. The client invents its own `sessionId` (an MD5 of a GUID) an
 `username` plus `passwd` **already MD5-hashed**:
 
 ```powershell
-$md5pw   = (MD5 "admin")              # 21232f297a57a5a743894a0e4a801fc3
+$md5pw   = (MD5 $Password)            # MD5 of the admin account's password
 $sessionId = MD5 ([guid]::NewGuid())
 '{"cmd":100,"method":"POST","sessionId":"' + $sessionId + '",
   "username":"admin","passwd":"' + $md5pw + '","language":"EN"}'

@@ -3,11 +3,16 @@
 > 👤 **Author:** Nipun Methmal · MIT License
 
 PowerShell helpers actually used during this project. **No credentials are stored in any of these
-files** — the router password is read from `$env:P11_PASS` (or prompted), and the web-API password
-is a parameter.
+files** — both passwords come from environment variables (or a prompt):
+
+| Variable | Used by | What it is |
+|---|---|---|
+| `$env:P11_PASS` | `tnexec.ps1` | root password on the **OpenWrt** device (telnet/SSH) |
+| `$env:P11_WEB_PASS` | `web-login.ps1` | `admin` account password on the **stock** web UI |
 
 ```powershell
-$env:P11_PASS = 'your-router-root-password'
+$env:P11_PASS      = 'your-router-root-password'
+$env:P11_WEB_PASS  = 'your-stock-web-admin-password'   # not the factory default
 ```
 
 | Script | Purpose | Doc |
@@ -22,7 +27,7 @@ $env:P11_PASS = 'your-router-root-password'
 
 ```powershell
 # 1. shell on the stock device (docs 04 → 05)
-.\web-login.ps1 -Password 'admin' -OutFile .\sid.txt
+.\web-login.ps1 -Password $env:P11_WEB_PASS -OutFile .\sid.txt
 .\p145-inject.ps1 -SessionId (Get-Content .\sid.txt) -Command 'id'
 .\p145-inject.ps1 -SessionId (Get-Content .\sid.txt) -SpawnTelnet
 

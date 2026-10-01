@@ -126,7 +126,10 @@ We built and validated an md5crypt cracker against the root hash
 passing). In the end **it was never needed** — the RCE in doc 04 handed us root directly, which made
 cracking moot. The cracker is kept in the repository as a working, tested piece of code.
 
-The web login, as it turned out, was considerably simpler: `admin` / `admin`.
+The web login, as it turned out, was considerably simpler than the hashes suggested: the **`admin`**
+account with a single, non-default password — known to the owner, and deliberately **not** recorded
+in this repository. (The username is the vendor's stock one; only the password was changed.) See
+[doc 04 § authentication](04-rce-cmd-145.md#the-authentication-gate) for why that still didn't stop us.
 
 ---
 
