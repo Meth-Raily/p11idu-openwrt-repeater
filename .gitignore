@@ -1,0 +1,74 @@
+# ---------------------------------------------------------------------------
+# Author: Nipun Methmal (c) 2026 - MIT License
+#
+# This repo is PUBLIC. Keep vendor firmware, personal identifiers and live
+# credentials out of it. If you fork this, do not delete these rules.
+# ---------------------------------------------------------------------------
+
+# --- Vendor firmware (copyrighted, and 90 MB) ------------------------------
+*.bin
+*.img
+*.squashfs
+*.jffs2
+*.cpio
+*.xz
+*.7z
+p11_extracted.zip
+p11_extracted/
+_p11.bin.extracted/
+squashfs-root*/
+vendor/
+
+# --- Raw vendor source we analysed (do not redistribute) ------------------
+lua.cgi
+cmd.lua
+system.lua
+network.lua
+tz_www/
+/usr/lib/lua/tz/
+
+# --- Live credentials & secrets -------------------------------------------
+*.pem
+*.key
+id_rsa*
+.env
+.env.*
+secrets.*
+credentials.*
+*_raw.txt
+openwrt_raw.txt
+
+# --- Anything holding real device identifiers -----------------------------
+shadow
+/etc/shadow
+passwd
+*.mac
+imsi*
+imei*
+*sessionsave*
+
+# --- Screenshots / captures with PII --------------------------------------
+# (media/*.png is curated by hand; raw captures stay out)
+screenshots/
+*.pcap
+*.cap
+
+# --- Extracted stock-firmware text ----------------------------------------
+p11_strings.txt
+sweep_get.txt
+inj_*.txt
+wifi_cands.txt
+
+# --- OS / editor ----------------------------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# --- Python / build junk (if you extend the tooling) ----------------------
+__pycache__/
+*.pyc
+node_modules/

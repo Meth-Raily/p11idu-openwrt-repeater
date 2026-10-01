@@ -1,0 +1,30 @@
+# Author : Nipun Methmal (c) 2026 - MIT License
+# Part of: p11idu-openwrt-repeater
+# Source : `uci export system` on the running device
+#
+# The LED block is the nice touch: the 'green:wan' indicator is retargeted from
+# the disabled wired port to phy0-sta0, so it lights with the Wi-Fi uplink.
+
+package system
+
+config system
+        option hostname 'P11IDU'
+        option timezone 'UTC'
+        option ttylogin '0'
+        option log_size '128'
+        option urandom_seed '0'
+
+config timeserver 'ntp'
+        option enabled '1'
+        option enable_server '0'
+        list server '0.openwrt.pool.ntp.org'
+        list server '1.openwrt.pool.ntp.org'
+        list server '2.openwrt.pool.ntp.org'
+        list server '3.openwrt.pool.ntp.org'
+
+# WAN LED follows the Wi-Fi uplink instead of eth0.2
+config led
+        option sysfs 'green:wan'
+        option trigger 'netdev'
+        option dev 'phy0-sta0'
+        list mode 'link'

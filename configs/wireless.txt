@@ -1,0 +1,36 @@
+# Author : Nipun Methmal (c) 2026 - MIT License
+# Part of: p11idu-openwrt-repeater
+# Source : `uci export wireless` on the running device (credentials sanitised)
+#
+# Single radio doing double duty: an AP for your devices and a STA for the uplink.
+# Both ifaces sit on radio0, so they always share one channel.
+
+package wireless
+
+config wifi-device 'radio0'
+        option type 'mac80211'
+        option path 'platform/10300000.wmac'
+        option band '2g'
+        option channel '11'
+        option htmode 'HT40'
+        option disabled '0'
+        option txpower '20'
+        option cell_density '0'
+
+# --- your own network (what devices connect TO) -----------------------------
+config wifi-iface 'default_radio0'
+        option device 'radio0'
+        option network 'lan'
+        option mode 'ap'
+        option ssid '<AP_SSID>'
+        option encryption 'psk2'
+        option key '<AP_KEY>'
+
+# --- the uplink (what we are repeating) -------------------------------------
+config wifi-iface 'sta0'
+        option device 'radio0'
+        option network 'wwan'
+        option mode 'sta'
+        option ssid '<UPSTREAM_SSID>'
+        option encryption 'psk2'
+        option key '<UPSTREAM_PSK>'
