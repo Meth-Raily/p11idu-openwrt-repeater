@@ -1,0 +1,167 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+/*
+ * Tozed P11IDU - indoor CPE unit (Dialog, Sri Lanka)
+ *
+ * MediaTech MT7628AN, 16 MiB SPI-NOR, 1x 2.4 GHz radio, 5x 10/100
+ * Ethernet ports wired to the integrated rt3050-esw switch.
+ *
+ * This device tree was recovered from the running unit by decompiling
+ * /sys/firmware/fdt and re-expressing the device-specific nodes against
+ * the current mt7628an.dtsi. See ../../../../../hardware/README.md for
+ * the provenance of every node below.
+ *
+ * Copyright (C) 2026 Nipun Methmal
+ */
+
+#include "mt7628an.dtsi"
+
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/leds/common.h>
+
+/ {
+	compatible = "tozed,p11idu", "mediatek,mt7628an-soc";
+	model = "Tozed P11IDU";
+
+	aliases {
+		led-boot = &led_wlan;
+		led-failsafe = &led_wlan;
+		led-running = &led_wlan;
+		led-upgrade = &led_wlan;
+		label-mac-device = &ethernet;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,57600";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_wlan: wlan {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 44 GPIO_ACTIVE_LOW>;
+		};
+
+		lte_red {
+			function = LED_FUNCTION_WAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 40 GPIO_ACTIVE_LOW>;
+		};
+
+		lte_green {
+			function = LED_FUNCTION_WAN;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&gpio 43 GPIO_ACTIVE_LOW>;
+		};
+
+		voice {
+			label = "voice";
+			gpios = <&gpio 46 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		reset {
+			label = "reset";
+			gpios = <&gpio 38 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_RESTART>;
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x0 0x30000>;
+				read-only;
+			};
+
+			partition@30000 {
+				label = "u-boot-env";
+				reg = <0x30000 0x10000>;
+				read-only;
+			};
+
+			partition@40000 {
+				label = "factory";
+				reg = <0x40000 0x10000>;
+				read-only;
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					eeprom_factory_0: eeprom@0 {
+						reg = <0x0 0x400>;
+					};
+
+					/*
+					 * Second MAC cell, stored at 0x4. No node
+					 * references it: board.d/02_network derives
+					 * wan_mac from the 0x28 cell instead.
+					 */
+					macaddr@4 {
+						compatible = "mac-base";
+						reg = <0x4 0x6>;
+						#nvmem-cell-cells = <1>;
+					};
+
+					macaddr_factory_28: macaddr@28 {
+						compatible = "mac-base";
+						reg = <0x28 0x6>;
+						#nvmem-cell-cells = <1>;
+					};
+				};
+			};
+
+			partition@50000 {
+				compatible = "denx,uimage";
+				label = "firmware";
+				reg = <0x50000 0xfb0000>;
+			};
+		};
+	};
+};
+
+&state_default {
+	gpio {
+		groups = "gpio", "i2s", "uart1", "wled_an", "p0led_an", "p3led_an", "wdt";
+		function = "gpio";
+	};
+};
+
+&wmac {
+	nvmem-cells = <&eeprom_factory_0>;
+	nvmem-cell-names = "eeprom";
+	status = "okay";
+};
+
+&ethernet {
+	nvmem-cells = <&macaddr_factory_28 0>;
+	nvmem-cell-names = "mac-address";
+};
+
+&sdhci {
+	status = "disabled";
+};
+
+&watchdog {
+	status = "disabled";
+};

@@ -102,24 +102,40 @@ Pinmux groups claimed: `gpio i2s uart1 wled_an p0led_an p3led_an wdt`, plus `spi
 
 ## Before this can be upstreamed
 
-The `.dts` in this folder is **machine-decompiled and is not submission-ready.** Still to do:
+The `.dts` in this folder is the **raw machine decompile** — it is kept as
+evidence, and it is *not* submission-ready. The tidied, label-resolved version now
+lives in [`upstream/`](../upstream/README.md). Where things stand:
 
-1. **Raw phandles → symbolic labels.** `<0x00000014 0x0000002c 0x00000001>` must become
-   `<&gpio0 44 GPIO_ACTIVE_LOW>`. Same for every `interrupt-parent`, `pinctrl-0` and
-   `nvmem-cells` reference. This is a mechanical but careful edit — one wrong reference and the
-   board silently loses its LEDs or its MAC.
-2. **`voice` LED still uses legacy `label =`** while the others use `function` + `color`.
-   Modern upstream convention wants `function`/`color` throughout, which means deciding what
-   `voice` actually indicates.
-3. **LED node names** (`wlan`, `lte_red`, `lte_green`) should be reviewed against OpenWrt's
-   LED naming so `01_leds` can reference them predictably.
-4. **Compile check.** Run `dtc -I dts -O dtb` — not installed here, but it should build with
-   zero warnings before anything is mailed.
-5. **Confirm the console baud.** The DTS says `console=ttyS0,57600`; upstream `mt7628` boards
-   normally use `115200`. Check what the bootloader actually passes rather than assuming.
-6. **The image recipe and `board.d` files were *not* recovered** — they are build-system files,
-   not device-tree content, so they are not in the DTB and still have to be written from
-   scratch. See [doc 06](../docs/06-installing-openwrt.md).
+1. ✅ **Raw phandles → symbolic labels — done.** `<0x00000014 0x0000002c 0x00000001>`
+   became `<&gpio 44 GPIO_ACTIVE_LOW>` in the `upstream/` copy, along with every
+   `interrupt-parent`, `pinctrl-0` and `nvmem-cells` reference. Labels were taken from
+   upstream's own `mt7628an.dtsi` (`gpio`, `esw`, `ethernet`, `wmac`, `spi0`,
+   `state_default`), not guessed.
+2. **`voice` LED still uses legacy `label =`** while the others use `function` + `color` —
+   and the `upstream/` copy keeps it that way on purpose. There is no
+   `LED_FUNCTION_VOICE` in `dt-bindings/leds/common.h`, so there is nothing better to
+   write without inventing semantics nobody has verified. What `voice` actually indicates
+   is still an open question.
+3. ✅ **LED node names — verified, not reviewed.** `ls /sys/class/leds/` on the running
+   unit returns `green:wan`, `red:wan`, `red:wlan`, `voice`, which confirms the
+   `function`/`color` pairs as written — including the surprise that the `wlan` LED is
+   **red** (`LED_COLOR_ID_RED` is `1`, not `2`).
+4. ⬜ **Compile check — still outstanding.** `dtc` is not installed here; nothing in
+   `upstream/` has been through a build.
+5. ⬜ **Confirm the console baud — still outstanding.** The DTS says
+   `console=ttyS0,57600`; upstream `mt7628` boards normally use `115200`. Check what the
+   bootloader actually passes rather than assuming.
+6. ✅ **The image recipe and `board.d` files are now drafted** in
+   [`upstream/`](../upstream/README.md) — the image recipe from the DTB's `firmware`
+   partition size, the `02_network` arms verbatim from the running unit, and `01_leds`
+   as an explicitly-labelled proposal. See [doc 06](../docs/06-installing-openwrt.md).
+
+One further wrinkle worth knowing about: **this board's base `.dtsi` is not current
+upstream.** The running tree names the console UART `uart0@c00` where upstream calls it
+`serial@c00` (label `uartlite`). So the DTB above is a merge of a device DTS *and* an
+older `.dtsi`, and separating the two was done by comparing the recovered nodes against
+upstream's `mt7628an.dtsi` — which is exactly why a real compile is still required
+before mailing anything.
 
 ## Security note
 

@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# Tozed P11IDU - device recipe
+#
+# Insert into:  target/linux/ramips/image/mt76x8.mk
+# Indentation:  2 spaces (matches the rest of that file)
+#
+# IMAGE_SIZE is the size of the `firmware` partition exactly as it appears
+# in the running unit's device tree:
+#
+#     partition@50000 {
+#         compatible = "denx,uimage";
+#         label      = "firmware";
+#         reg        = <0x50000 0xfb0000>;      <- 0xfb0000 = 16064k
+#     };
+#
+# BLOCKSIZE is deliberately NOT set: target/linux/ramips/image/Makefile
+# defines `BLOCKSIZE := 64k` in Device/Default, which matches the part's
+# real erase size (65536 bytes, read back from /sys/class/mtd/mtd0/erasesize).
+# Setting it again would be redundant.
+#
+# DEVICE_PACKAGES is deliberately empty: the SoC's built-in 11bgn radio is
+# served by the default ramips profile, and the board exposes no USB or SD
+# peripherals that are wired up (see the &sdhci override in the DTS).
+# ---------------------------------------------------------------------------
+
+define Device/tozed_p11idu
+  IMAGE_SIZE := 16064k
+  DEVICE_VENDOR := Tozed
+  DEVICE_MODEL := P11IDU
+endef
+TARGET_DEVICES += tozed_p11idu

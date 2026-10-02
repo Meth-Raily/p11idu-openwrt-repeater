@@ -39,10 +39,13 @@ make -j$(nproc) DL_DIR=... IB=...   # then:
 
 > 💡 **The device tree from that build already exists — recovered.** It was pulled off the
 > running device and committed to [`hardware/`](../hardware/README.md), so nothing hinges on
-> finding an old build directory. What a build tree would still be *uniquely* useful for is the
-> **image recipe** and the **`board.d` files** — those are build-system files, they were never in
-> the device tree, and they have to be written. See
-> [Can this go upstream?](#can-this-go-upstream).
+> finding an old build directory.
+>
+> The two things a lost build tree *would* have held — the **image recipe** and the
+> **`board.d` files** — are now written too, as a draft series in
+> [`upstream/`](../upstream/README.md). The image recipe and the `02_network` arms were read
+> straight back off the running unit; the `01_leds` arm is a proposal. None of it is
+> compile-verified yet. See [Can this go upstream?](#can-this-go-upstream).
 
 **B. Source a known-good image** built for this board by someone who has one. Do **not** substitute
 a generic `mt76x8` image or another device's image: the wrong DTS means wrong flash partitions,
@@ -234,12 +237,17 @@ not just a wiki page.
 
 | # | Artefact | State |
 |---|---|---|
-| 1 | `target/linux/ramips/dts/mt7628_tozed_p11idu.dts` | ✅ **Recovered** — decompiled off the running device; see [`hardware/`](../hardware/README.md). Needs symbolic labels and a `dtc` compile check before mailing |
-| 2 | `target/linux/ramips/image/mt76x8.mk` → `Image/Device/tozed,p11idu` | Image recipe + `DEVICE_PACKAGES` |
-| 3 | `base-files/etc/board.d/01_leds` | LED defaults (`green:wan`, signal LEDs) |
-| 4 | `base-files/etc/board.d/02_network` | Port/VLAN defaults — the `6t 0 1 3` / `6t 2 4` layout |
+| 1 | `target/linux/ramips/dts/mt7628an_tozed_p11idu.dts` | ✅ **Written** — recovered off the running device, then re-expressed with `&gpio`-style labels against upstream `mt7628an.dtsi`. Draft in [`upstream/`](../upstream/README.md) |
+| 2 | `target/linux/ramips/image/mt76x8.mk` → `Device/tozed_p11idu` | ✅ **Draft** — `IMAGE_SIZE := 16064k`, taken straight from the `firmware` partition's `reg = <0x50000 0xfb0000>` |
+| 3 | `base-files/etc/board.d/01_leds` | 🟡 **Draft, and a proposal** — no `tozed` arm exists on the running unit, so the triggers are reasoned from the sysfs LED names rather than observed |
+| 4 | `base-files/etc/board.d/02_network` | ✅ **Draft, verbatim** — the two `tozed,p11idu` arms read straight off the running unit's own `board.d` |
 | 5 | Built image, flashed, **verified on hardware** | You have this: reboot persistence, NAT, channel-following all tested (doc 08) |
-| 6 | `openwrt-devel` patch + `Tested-by:` | Not done |
+| 6 | `openwrt-devel` patch + `Tested-by:` | Not done — gated on disclosure to Tozed/Dialog |
+
+The four code artefacts live in [`upstream/`](../upstream/README.md), laid
+out along OpenWrt's own paths, with each file's destination, indentation
+style and insertion point spelled out. **None of them have been compiled** —
+there is no Linux toolchain here, so `make` has never run against them.
 
 ### What you already have that most contributors don't
 
@@ -254,14 +262,17 @@ not just a wiki page.
 
 ### The process
 
-1. **The DTS is already safe.** It lives in [`hardware/`](../hardware/README.md) — there is no
-   build tree left to lose. What remains is a *cleanup* pass, not hardware detective work:
-   turn raw phandles into `&gpio0`-style labels and get it past `dtc` without warnings.
+1. **The DTS is already written.** It lives in [`upstream/`](../upstream/README.md) — there is no
+   build tree left to lose. Raw phandles are now `&gpio`-style labels, and every `status` override
+   has been cross-checked against upstream `mt7628an.dtsi` to work out which nodes genuinely need
+   one. What remains is a *compile* pass: get it past `dtc` without warnings.
 2. Rebase onto current `master` and produce three clean commits (DTS, image recipe, board.d).
-   The image recipe and `board.d` files are the part that genuinely still has to be written —
-   they are build-system files, so they were never in the device tree to recover.
+   The `mt76x8.mk` and `board.d` drafts are also written — the image recipe and the
+   `02_network` arms came from the running unit, so they are evidence rather than invention.
+   `01_leds` is the one genuinely open question: nobody has watched those lamps under a
+   normal config, because the device never shipped an LED config at all.
 3. Post to **`openwrt-devel`** with the patch series and a `Tested-by:` line describing the exact
-   hardware revision.
+   hardware revision — but only after the disclosure in [doc 04](04-rce-cmd-145.md) has gone out.
 4. Expect review questions: partition layout justification, why `HT40` vs `HT20`, GPIO polarity,
    and whether the LEDs are wired as the DTS claims.
 5. Once merged: **official images** appear on `downloads.openwrt.org`, and

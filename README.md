@@ -114,10 +114,24 @@ Verify with the script in [`scripts/verify-repeater.ps1`](scripts/verify-repeate
 ```
 docs/      The nine-part write-up (start at 01)
 hardware/  The recovered device tree — .dts plus the raw .dtb, with provenance
+upstream/  Draft OpenWrt patch series: DTS, image recipe, board.d arms
 configs/   Sanitized UCI exports from the live device
 scripts/   PowerShell + shell helpers actually used during the project
 media/     Screenshots of the finished system
 ```
+
+### A draft patch series, not a claim of support
+
+[`upstream/`](upstream/README.md) contains a four-file draft series that would add this
+board to OpenWrt's `ramips/mt76x8` target: the device tree with symbolic labels, the
+`mt76x8.mk` image recipe, and the two `board.d` additions. The device tree and the
+`02_network` arms were taken back off the running unit; the `01_leds` arm is a proposal.
+
+**None of it has been compiled** — there is no Linux toolchain in this environment, so
+`make` has never been run against these files. Treat it as a well-evidenced draft that
+still owes you a `dtc` run, a real build, and a `Tested-by:` from hardware. It is also
+gated on the disclosure in [doc 04](docs/04-rce-cmd-145.md): sending this upstream, or
+putting it on the OpenWrt wiki, comes after Tozed and Dialog have been told.
 
 **Deliberately excluded:** the dumped stock firmware image, the extracted rootfs archive, and any
 screenshot showing your ISP's equipment identifiers (IMSI/IMEI/WAN MAC). See

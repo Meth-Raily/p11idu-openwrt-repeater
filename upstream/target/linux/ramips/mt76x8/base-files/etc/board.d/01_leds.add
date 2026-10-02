@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Tozed P11IDU - LED defaults
+#
+# Insert into:  target/linux/ramips/mt76x8/base-files/etc/board.d/01_leds
+# Indentation:  case arm at COLUMN 0, body indented ONE TAB (note: this
+#               differs from 02_network, which is tab-indented throughout).
+#
+# STATUS: PROPOSAL. Unlike 02_network, this file has no tozed,p11idu arm on
+# the running unit - grep -rn tozed /etc/board.d/01_leds comes back empty -
+# so on hardware the LEDs are simply left on their kernel default (no
+# trigger). Everything below is a starting point for submission, not
+# something observed in service.
+#
+# The four GPIO LED names were verified against sysfs on the running unit:
+#
+#     $ ls /sys/class/leds/
+#     green:wan   mt76-phy0   red:wan   red:wlan   voice
+#
+# which in turn confirms the DTS colour/function pairs - LED_COLOR_ID_RED
+# is 1 and LED_COLOR_ID_GREEN is 2, so the lte_red/lte_green node names
+# line up with their declared colours, and the wlan LED is red, not green.
+# ---------------------------------------------------------------------------
+
+# ---8<--- case arm: tozed,p11idu ---
+tozed,p11idu)
+	ucidef_set_led_switch "wan" "wan" "green:wan" "switch0" "0x14"
+	ucidef_set_led_netdev "wifi" "wifi" "red:wlan" "phy0-ap0"
+	;;
+# ---8<--- /case arm ---
+
+# ---------------------------------------------------------------------------
+# What this does, and what it deliberately leaves alone
+#
+# green:wan  <- switch0 port mask 0x14, i.e. bit 2 | bit 4, the two ports
+#               that docs/01 identifies as WAN 1 / WAN 2. Lights when the
+#               wired WAN side has link.
+#
+# red:wlan   <- netdev trigger on phy0-ap0, the 2.4 GHz AP interface. The
+#               name phy0-ap0 was confirmed on the running unit
+#               (ls /sys/class/net/ -> br-lan eth0 eth0.1 lo phy0-ap0
+#               phy0-sta0); there is no wlan0 on this board, so the
+#               wlan0 spelling used by some older entries would never fire.
+#
+# red:wan    <- LEFT UNCONFIGURED ON PURPOSE. The DTS node is called
+#               lte_red and its sibling lte_green, which strongly suggests
+#               the pair are LTE/modem status lamps rather than wired-WAN
+#               lamps. Wiring red:wan to a switch or netdev trigger could
+#               therefore drive it wrongly. Needs a unit with a live modem.
+#
+# voice      <- LEFT UNCONFIGURED ON PURPOSE. GPIO 46 carries a bare
+#               `label = "voice"` with no function/colour, i.e. the vendor
+#               used the legacy LED API for it. No obvious trigger exists
+#               for a VoIP indicator on a board with no telephony stack.
+#
+# If the lte_* reading turns out to be right, green:wan above should be
+# dropped rather than retargeted - see the note in README.md.
+# ---------------------------------------------------------------------------

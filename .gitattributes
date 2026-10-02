@@ -1,0 +1,38 @@
+# Line endings for a repository authored on Windows but consumed as source.
+#
+# Several payloads here get copied into an OpenWrt build tree, where CRLF is
+# not a cosmetic problem - it is a hard failure:
+#   * a CR in a shell script shows up as '$\r': command not found
+#   * dtc rejects CR characters inside DTS
+#   * a CR at the end of a Makefile recipe line breaks the recipe
+#
+# Force LF for anything meant to be executed or compiled, no matter what the
+# local core.autocrlf says.
+
+# Patch payloads - must be byte-applyable.
+upstream/**          text eol=lf
+
+# Device trees and build files.
+*.dts                text eol=lf
+*.dtsi               text eol=lf
+*.mk                 text eol=lf
+
+# Shell (both on the build host and on the device itself).
+*.sh                 text eol=lf
+scripts/board.d/*    text eol=lf
+
+# Never normalise these - they are byte-exact artefacts, and converting a
+# binary file corrupts it silently.
+*.dtb                binary
+*.bin                binary
+*.img                binary
+*.tar                binary
+*.gz                 binary
+*.xz                 binary
+*.squashfs           binary
+*.ipk                binary
+
+# Screenshots.
+*.png                binary
+*.jpg                binary
+*.jpeg               binary

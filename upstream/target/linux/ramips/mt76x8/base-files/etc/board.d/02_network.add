@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+# Tozed P11IDU - network defaults
+#
+# Insert into:  target/linux/ramips/mt76x8/base-files/etc/board.d/02_network
+# Indentation:  TABS - 1 tab for the case arm, 2 tabs for the body,
+#               3 tabs for continuation lines.
+#
+# Both arms below were read back verbatim from a running P11IDU
+# (/etc/board.d/02_network, the tozed,p11idu arms of ramips_setup_interfaces
+# and ramips_setup_macs) and are reproduced unchanged. The switch port roles
+# were cross-checked against /proc/mtd, the decompiled device tree and
+# docs/01-hardware-and-attack-surface.md:
+#
+#     port 0, 1, 3  ->  LAN   (VLAN 1 untagged, CPU port 6 tagged)
+#     port 2, 4     ->  WAN   (VLAN 2 untagged, CPU port 6 tagged)
+#     port 6        ->  CPU
+#
+# Only the LAN side is brought up by default; the wired WAN belongs to an
+# outdoor unit that is not part of this bundle.
+# ---------------------------------------------------------------------------
+
+# ===========================================================================
+# (1) ramips_setup_interfaces()
+#
+# Suggested insertion point: immediately after the teltonika,rut241 arm,
+# before hiwifi,hc5761a. The running unit carries it after widora,neo-32m
+# instead - the ordering inside a `case` is not significant.
+#
+#     tozed,p11idu)
+#             ucidef_add_switch "switch0" \
+#                     "0:lan" "1:lan" "3:lan" "2:wan" "4:wan" "6@eth0"
+#             ;;
+#
+# ===========================================================================
+# (2) ramips_setup_macs()
+#
+# Suggested insertion point: immediately before the tplink,archer-c20-v4
+# arm - the same position the running unit carries it in.
+#
+#     tozed,p11idu)
+#             lan_mac=$(mtd_get_mac_binary factory 0x28)
+#             wan_mac=$(macaddr_add "$lan_mac" 1)
+#             ;;
+#
+# factory + 0x28 is the WAN/LAN base MAC cell described by the `macaddr@28`
+# nvmem cell in the device tree; the second address is simply base + 1.
+# ---------------------------------------------------------------------------
+
+# The two blocks below are the copy-paste payload, kept tab-indented:
+
+# ---8<--- ramips_setup_interfaces: tozed,p11idu ---
+	tozed,p11idu)
+		ucidef_add_switch "switch0" \
+			"0:lan" "1:lan" "3:lan" "2:wan" "4:wan" "6@eth0"
+		;;
+# ---8<--- /ramips_setup_interfaces ---
+
+# ---8<--- ramips_setup_macs: tozed,p11idu ---
+	tozed,p11idu)
+		lan_mac=$(mtd_get_mac_binary factory 0x28)
+		wan_mac=$(macaddr_add "$lan_mac" 1)
+		;;
+# ---8<--- /ramips_setup_macs ---
