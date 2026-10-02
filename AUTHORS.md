@@ -10,7 +10,8 @@ conversion, the repeater design, the verification methodology, and this write-up
 
 - 🔧 Hardware: Tozed P11IDU (owned by the author)
 - 📡 Network: single-radio NAT repeater, `192.168.8.0/24` ↔ upstream `192.168.1.0/24`
-- 🐧 Firmware: official OpenWrt 24.10-SNAPSHOT, `ramips/mt76x8` → `tozed,p11idu`
+- 🐧 Firmware: OpenWrt 24.10-SNAPSHOT **built by the author** for `ramips/mt76x8` → `tozed,p11idu`
+  (not an official download — the board is unsupported upstream)
 - 🔍 Research: authenticated RCE in the stock Tozed web UI (`/cgi-bin/lua.cgi`, `cmd=145`)
 
 ## Attribution

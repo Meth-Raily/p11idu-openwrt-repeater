@@ -2,18 +2,50 @@
 
 > 👤 **Author:** Nipun Methmal · Part 6 of 9 · [← Index](../README.md) · [Next →](07-building-the-repeater.md)
 
-The device is officially supported by OpenWrt — `tozed,p11idu` exists as an upstream profile on the
-`ramips/mt76x8` target. That means **no custom image, no device-tree porting, no rebuild**: a stock
-image from `downloads.openwrt.org` is the correct answer.
+> ⚠️ **Read this first: the P11IDU is not supported by OpenWrt upstream.**
+> Verified 2 October 2026 — see [doc 01](01-hardware-and-attack-surface.md) for the evidence:
+> zero matches for `p11idu` in the `openwrt/openwrt` tree, and none of the 134 `ramips/mt76x8`
+> snapshot profiles are for this board. **There is nothing to download for this device from
+> `downloads.openwrt.org`.**
+
+The image running on the device in this write-up was therefore **built from OpenWrt source by the
+author**, with a device tree written for this board — which is why it reports
+`board_name: "tozed,p11idu"` and a locally-produced revision:
+
+```
+DISTRIB_RELEASE='24.10-SNAPSHOT'
+DISTRIB_REVISION='r0-97f7026'      ← 'r0' = not an official snapshot build
+```
 
 ## 1. Get the right image
 
-```
-https://downloads.openwrt.org/   →   targets / ramips / mt76x8
+You need a **sysupgrade** image for `ramips/mt76x8` that contains the `tozed,p11idu` device tree.
+Two ways to get one:
+
+**A. Build it (what we did)** — an OpenWrt source tree with three additions:
+
+| File | Purpose |
+|---|---|
+| `target/linux/ramips/dts/mt7628_tozed_p11idu.dts` | Device tree: partitions, GPIOs, keys, LEDs, ethernet/switch |
+| `target/linux/ramips/image/mt76x8.mk` | `Image/Device/tozed,p11idu` — image recipe, profile, `DEVICE_TITLE` |
+| `target/linux/ramips/mt76x8/base-files/etc/board.d/01_leds`, `02_network` | LED names and per-board port/VLAN defaults |
+
+```sh
+make defconfig
+make menuconfig        # Target: MediaTek Ralink MIPS → mt76x8; select Device → Tozed P11IDU
+make -j$(nproc) DL_DIR=... IB=...   # then:
+#   bin/targets/ramips/mt76x8/openwrt-...-ramips-mt76x8-tozed-p11idu-squashfs-sysupgrade.bin
 ```
 
-You want the **sysupgrade** image for `tozed,p11IDU` (not *factory* — there is no vendor bootloader
-recovery story here, and we already have a shell).
+> 💡 If you still have that build tree, **back it up** — it is the single most valuable artefact in
+> this project, and it is the thing that would make an upstream submission possible — see
+> [Can this go upstream?](#can-this-go-upstream) at the end of this document.
+
+**B. Source a known-good image** built for this board by someone who has one. Do **not** substitute
+a generic `mt76x8` image or another device's image: the wrong DTS means wrong flash partitions,
+which means a brick.
+
+### What you are aiming for
 
 | | |
 |---|---|
@@ -23,18 +55,28 @@ recovery story here, and we already have a shell).
 | Image type | `*-sysupgrade.bin` |
 | Architecture | `mipsel_24kc` |
 
-What we ended up running:
+Running system at the end of this project:
 
 ```
 OpenWrt 24.10-SNAPSHOT r0-97f7026
 kernel 6.6.157 · ramips/mt76x8 · mipsel_24kc · squashfs rootfs
 ```
 
-Sanity-check before you trust a file:
+### Sanity-check before you trust a file
+
+The wrong image on this board will not fail loudly — it will write the wrong partitions. Verify
+before flashing:
 
 ```sh
-sha256sum openwrt-*.img.gz        # compare against sha256sums on the download page
+# 1. the device tree must name your board
+dumpimage -T dtbs -p 0 openwrt-*-sysupgrade.bin | strings | grep compatible
+#   expect: tozed,p11idu
+
+# 2. compare against whatever checksum the builder published
+sha256sum openwrt-*-sysupgrade.bin
 ```
+
+If step 1 doesn't say `tozed,p11idu`, **stop**.
 
 ## 2. Transfer it over the shell you already have
 
@@ -175,6 +217,55 @@ Rollback is then a single line:
 ```sh
 cp /root/network.bak /etc/config/network && service network reload
 ```
+
+---
+
+## Can this go upstream?
+
+**Yes — and right now it genuinely isn't there.** That is not a figure of speech: `p11idu` returns
+zero results in `openwrt/openwrt`, and none of the 134 `ramips/mt76x8` profiles published in the
+current snapshot are for this board. Getting it into OpenWrt's device list means adding real code,
+not just a wiki page.
+
+### What a submission needs
+
+| # | Artefact | State |
+|---|---|---|
+| 1 | `target/linux/ramips/dts/mt7628_tozed_p11idu.dts` | **Must come from your build tree** — this is the board's hardware description: partitions, GPIOs, buttons, LEDs, ethernet/switch wiring |
+| 2 | `target/linux/ramips/image/mt76x8.mk` → `Image/Device/tozed,p11idu` | Image recipe + `DEVICE_PACKAGES` |
+| 3 | `base-files/etc/board.d/01_leds` | LED defaults (`green:wan`, signal LEDs) |
+| 4 | `base-files/etc/board.d/02_network` | Port/VLAN defaults — the `6t 0 1 3` / `6t 2 4` layout |
+| 5 | Built image, flashed, **verified on hardware** | You have this: reboot persistence, NAT, channel-following all tested (doc 08) |
+| 6 | `openwrt-devel` patch + `Tested-by:` | Not done |
+
+### What you already have that most contributors don't
+
+- The board **works**, and is documented end-to-end — the strongest kind of `Tested-by:`
+- Flash layout derived from a **16 MB raw dump** of stock firmware (doc 02)
+- Stock DTS recoverable two ways: from the dump, and from the running system via
+  `cat /sys/firmware/fdt`
+- Real-world verification: reboot persistence, upstream channel changes, throughput numbers
+- LED and switch behaviour confirmed in LuCI, not guessed from a datasheet
+
+### The process
+
+1. **Back up the build tree.** Nothing else matters if it's lost — the DTS is hours of hardware
+   detective work.
+2. Rebase onto current `master` and produce three clean commits (DTS, image recipe, board.d).
+3. Post to **`openwrt-devel`** with the patch series and a `Tested-by:` line describing the exact
+   hardware revision.
+4. Expect review questions: partition layout justification, why `HT40` vs `HT20`, GPIO polarity,
+   and whether the LEDs are wired as the DTS claims.
+5. Once merged: **official images** appear on `downloads.openwrt.org`, and
+   [the wiki page](https://openwrt.org/toh/start) follows.
+
+### Why bother
+
+Right now every P11IDU owner has to obtain an unofficial build from somewhere — which is exactly
+how people end up flashing the wrong DTS onto the wrong board. Upstreaming turns this write-up from
+"here's how one person did it" into "here's the supported path."
+
+It would also make the claim at the top of this repository rather more than *as far as I can find*.
 
 ---
 

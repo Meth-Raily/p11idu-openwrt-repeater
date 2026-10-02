@@ -19,8 +19,18 @@ possible.
 | **Target** | `ramips/mt76x8` / `mipsel_24kc` |
 | **Board name** | `tozed,p11idu` |
 
-The board name matters: `tozed,p11idu` is an **existing upstream OpenWrt device profile**, so this
-device can run unmodified official builds — no device-tree porting was needed for this project.
+The board name matters — and **`tozed,p11idu` is not in OpenWrt upstream.** Verified 2 October 2026:
+
+| Check | Result |
+|---|---|
+| `p11idu` anywhere in `openwrt/openwrt` | **0 matches** |
+| `ramips/mt76x8` snapshot profiles | 134 total — **none** for Tozed/P11 |
+| Anything under `downloads.openwrt.org/.../ramips/mt76x8/` | **no `tozed` or `p11` file** |
+| The only Tozed device upstream | `tozed,zlt-s12-pro` — a **different** box, on **mt7621** |
+
+So the image running on this unit carries a device tree that had to be written for this board by
+somebody. Where that image came from, and what it takes to get it into OpenWrt properly, are
+covered in [doc 06](06-installing-openwrt.md).
 
 ## The Ethernet switch
 

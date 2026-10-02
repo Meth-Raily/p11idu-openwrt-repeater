@@ -1,7 +1,7 @@
 # P11IDU OpenWrt NAT Repeater
 
 > 👤 **Author:** Nipun Methmal · 📅 October 2026 · 🪪 MIT License
-> **Tozed P11IDU → stock firmware root → official OpenWrt → single-radio Wi‑Fi repeater**
+> **Tozed P11IDU → stock firmware root → OpenWrt → single-radio Wi‑Fi repeater**
 
 **By Nipun Methmal** — as far as I can find, the first published, fully documented conversion of the
 Tozed P11IDU into a wireless repeater, including the firmware dump, the stock-firmware code review,
@@ -23,7 +23,7 @@ the stock firmware image.
 | 03 | [Reconnaissance](docs/03-reconnaissance.md) | The JSON API, what we tried, and what did **not** work |
 | 04 | **[The `cmd=145` RCE](docs/04-rce-cmd-145.md)** | The authenticated command injection, straight from vendor source |
 | 05 | [Getting a root shell](docs/05-root-shell.md) | Login → inject → read output back → persistent telnet |
-| 06 | [Installing OpenWrt](docs/06-installing-openwrt.md) | The sysupgrade flash procedure and first boot |
+| 06 | [Installing OpenWrt](docs/06-installing-openwrt.md) | **No official image exists** — building one, plus the sysupgrade flash and first boot |
 | 07 | [Building the repeater](docs/07-building-the-repeater.md) | STA+AP on one radio, `wwan`, firewall, NAT |
 | 08 | [Verification](docs/08-verification.md) | Routing, conntrack, reboot persistence, throughput |
 | 09 | [Is it an L3 switch?](docs/09-is-it-an-l3-switch.md) | What it is, what it isn't, how to make it one |
