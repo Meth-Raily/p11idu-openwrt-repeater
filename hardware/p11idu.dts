@@ -3,6 +3,8 @@
  * Tozed P11IDU - OpenWrt 24.10-SNAPSHOT r0-97f7026 - kernel 6.6.157
  * Original DTB: 9118 bytes, retrieved over telnet 2 Oct 2026.
  *
+ * Author: Nipun Methmal
+ *
  * Machine-decompiled without dtc. Review and reformat before upstreaming.
  */
 /dts-v1/;

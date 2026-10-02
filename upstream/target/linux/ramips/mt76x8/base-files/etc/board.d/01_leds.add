@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------------------
 # Tozed P11IDU - LED defaults
 #
+# Author: Nipun Methmal
+#
 # Insert into:  target/linux/ramips/mt76x8/base-files/etc/board.d/01_leds
 # Indentation:  case arm at COLUMN 0, body indented ONE TAB (note: this
 #               differs from 02_network, which is tab-indented throughout).

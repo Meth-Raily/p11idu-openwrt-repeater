@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------------------
 # Tozed P11IDU - device recipe
 #
+# Author: Nipun Methmal
+#
 # Insert into:  target/linux/ramips/image/mt76x8.mk
 # Indentation:  2 spaces (matches the rest of that file)
 #

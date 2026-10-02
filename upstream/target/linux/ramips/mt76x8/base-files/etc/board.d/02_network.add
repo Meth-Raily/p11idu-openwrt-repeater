@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------------------
 # Tozed P11IDU - network defaults
 #
+# Author: Nipun Methmal
+#
 # Insert into:  target/linux/ramips/mt76x8/base-files/etc/board.d/02_network
 # Indentation:  TABS - 1 tab for the case arm, 2 tabs for the body,
 #               3 tabs for continuation lines.

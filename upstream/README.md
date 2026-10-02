@@ -154,4 +154,4 @@ returns *"This topic does not exist yet"* — so whoever writes it will be
 creating the brand page from scratch. GitHub login works as a wiki
 account.
 
-See [`AUTHORS`](../AUTHORS) for authorship.
+See [`AUTHORS.md`](../AUTHORS.md) for authorship.
