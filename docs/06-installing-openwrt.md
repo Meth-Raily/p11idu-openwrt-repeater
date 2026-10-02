@@ -37,9 +37,12 @@ make -j$(nproc) DL_DIR=... IB=...   # then:
 #   bin/targets/ramips/mt76x8/openwrt-...-ramips-mt76x8-tozed-p11idu-squashfs-sysupgrade.bin
 ```
 
-> 💡 If you still have that build tree, **back it up** — it is the single most valuable artefact in
-> this project, and it is the thing that would make an upstream submission possible — see
-> [Can this go upstream?](#can-this-go-upstream) at the end of this document.
+> 💡 **The device tree from that build already exists — recovered.** It was pulled off the
+> running device and committed to [`hardware/`](../hardware/README.md), so nothing hinges on
+> finding an old build directory. What a build tree would still be *uniquely* useful for is the
+> **image recipe** and the **`board.d` files** — those are build-system files, they were never in
+> the device tree, and they have to be written. See
+> [Can this go upstream?](#can-this-go-upstream).
 
 **B. Source a known-good image** built for this board by someone who has one. Do **not** substitute
 a generic `mt76x8` image or another device's image: the wrong DTS means wrong flash partitions,
@@ -231,7 +234,7 @@ not just a wiki page.
 
 | # | Artefact | State |
 |---|---|---|
-| 1 | `target/linux/ramips/dts/mt7628_tozed_p11idu.dts` | **Must come from your build tree** — this is the board's hardware description: partitions, GPIOs, buttons, LEDs, ethernet/switch wiring |
+| 1 | `target/linux/ramips/dts/mt7628_tozed_p11idu.dts` | ✅ **Recovered** — decompiled off the running device; see [`hardware/`](../hardware/README.md). Needs symbolic labels and a `dtc` compile check before mailing |
 | 2 | `target/linux/ramips/image/mt76x8.mk` → `Image/Device/tozed,p11idu` | Image recipe + `DEVICE_PACKAGES` |
 | 3 | `base-files/etc/board.d/01_leds` | LED defaults (`green:wan`, signal LEDs) |
 | 4 | `base-files/etc/board.d/02_network` | Port/VLAN defaults — the `6t 0 1 3` / `6t 2 4` layout |
@@ -241,17 +244,22 @@ not just a wiki page.
 ### What you already have that most contributors don't
 
 - The board **works**, and is documented end-to-end — the strongest kind of `Tested-by:`
-- Flash layout derived from a **16 MB raw dump** of stock firmware (doc 02)
-- Stock DTS recoverable two ways: from the dump, and from the running system via
-  `cat /sys/firmware/fdt`
+- Flash layout derived from a **16 MB raw dump** of stock firmware (doc 02), now confirmed
+  against `/proc/mtd` on the running device
+- **The device tree is recovered**, not theoretical: pulled from `/sys/firmware/fdt`, decompiled,
+  and committed to [`hardware/`](../hardware/README.md) with its SHA-256
 - Real-world verification: reboot persistence, upstream channel changes, throughput numbers
-- LED and switch behaviour confirmed in LuCI, not guessed from a datasheet
+- LED and switch behaviour confirmed in LuCI, not guessed from a datasheet — and the GPIO
+  assignments are now known exactly rather than inferred
 
 ### The process
 
-1. **Back up the build tree.** Nothing else matters if it's lost — the DTS is hours of hardware
-   detective work.
+1. **The DTS is already safe.** It lives in [`hardware/`](../hardware/README.md) — there is no
+   build tree left to lose. What remains is a *cleanup* pass, not hardware detective work:
+   turn raw phandles into `&gpio0`-style labels and get it past `dtc` without warnings.
 2. Rebase onto current `master` and produce three clean commits (DTS, image recipe, board.d).
+   The image recipe and `board.d` files are the part that genuinely still has to be written —
+   they are build-system files, so they were never in the device tree to recover.
 3. Post to **`openwrt-devel`** with the patch series and a `Tested-by:` line describing the exact
    hardware revision.
 4. Expect review questions: partition layout justification, why `HT40` vs `HT20`, GPIO polarity,

@@ -113,6 +113,7 @@ Verify with the script in [`scripts/verify-repeater.ps1`](scripts/verify-repeate
 
 ```
 docs/      The nine-part write-up (start at 01)
+hardware/  The recovered device tree — .dts plus the raw .dtb, with provenance
 configs/   Sanitized UCI exports from the live device
 scripts/   PowerShell + shell helpers actually used during the project
 media/     Screenshots of the finished system
